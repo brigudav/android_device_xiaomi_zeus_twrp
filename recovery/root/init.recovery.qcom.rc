@@ -1,5 +1,13 @@
 import /init.recovery.qcom_decrypt.rc
 
+on early-init
+    insmod /vendor/lib/modules/q6_pdr_dlkm.ko
+    insmod /vendor/lib/modules/q6_notifier_dlkm.ko
+    insmod /vendor/lib/modules/snd_event_dlkm.ko
+    insmod /vendor/lib/modules/gpr_dlkm.ko
+    insmod /vendor/lib/modules/spf_core_dlkm.ko
+    insmod /vendor/lib/modules/adsp_loader_dlkm.ko
+
 on init
     write /sys/class/backlight/panel0-backlight/brightness 200
     setprop sys.usb.configfs 1
@@ -24,6 +32,29 @@ on boot
     chmod 0664 /dev/xiaomi-touch
     start touchfeature
     start vibratorfeature
+
+    insmod /vendor/lib/modules/xiaomi_touch.ko
+    insmod /vendor/lib/modules/synaptics_dsx.ko
+    insmod /vendor/lib/modules/nt36xxx-spi.ko
+    insmod /vendor/lib/modules/nt36xxx-i2c.ko
+    insmod /vendor/lib/modules/fts_touch_spi.ko
+    insmod /vendor/lib/modules/focaltech_fts.ko
+    insmod /vendor/lib/modules/atmel_mxt_ts.ko
+    insmod /vendor/lib/modules/aw8697-haptic.ko
+    modprobe -a -d /vendor/lib/modules/ xiaomi_touch
+    modprobe -a -d /vendor/lib/modules/ synaptics_dsx
+    modprobe -a -d /vendor/lib/modules/ nt36xxx-spi
+    modprobe -a -d /vendor/lib/modules/ nt36xxx-i2c
+    modprobe -a -d /vendor/lib/modules/ fts_touch_spi
+    modprobe -a -d /vendor/lib/modules/ focaltech_fts
+    modprobe -a -d /vendor/lib/modules/ atmel_mxt_ts
+    modprobe -a -d /vendor/lib/modules/ aw8697-haptic
+
+on property:twrp.modules.loaded=true
+    # Load ADSP firmware for PMIC
+    wait /sys/kernel/boot_adsp/boot
+    write /sys/kernel/boot_adsp/boot 1
+    wait /sys/class/power_supply/battery
     start health-hal-2-1
 
 service touchfeature /vendor/bin/hw/vendor.xiaomi.hw.touchfeature@1.0-service
