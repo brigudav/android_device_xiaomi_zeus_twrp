@@ -1,0 +1,41 @@
+import /init.recovery.qcom_decrypt.rc
+
+on init
+    write /sys/class/backlight/panel0-backlight/brightness 200
+    setprop sys.usb.configfs 1
+
+on property:ro.boot.usbcontroller=*
+    setprop sys.usb.controller ${ro.boot.usbcontroller}
+    wait /sys/bus/platform/devices/${ro.boot.usb.dwc3_msm:-a600000.ssusb}/mode
+    write /sys/bus/platform/devices/${ro.boot.usb.dwc3_msm:-a600000.ssusb}/mode peripheral
+    wait /sys/class/udc/${ro.boot.usbcontroller} 1
+
+on fs
+    wait /dev/block/platform/soc/${ro.boot.bootdevice}
+    symlink /dev/block/platform/soc/${ro.boot.bootdevice} /dev/block/bootdevice
+
+on post-fs
+    start boot-hal-1-1
+
+on boot
+    chown system system /dev/ion
+    mknod /dev/xiaomi-touch c 10 120
+    chown system system /dev/xiaomi-touch
+    chmod 0664 /dev/xiaomi-touch
+    start touchfeature
+    start vibratorfeature
+    start health-hal-2-1
+
+service touchfeature /vendor/bin/hw/vendor.xiaomi.hw.touchfeature@1.0-service
+    user root
+    group root
+    setenv LD_LIBRARY_PATH /vendor/lib64:/vendor/lib:/system/lib64:/system/lib:/sbin
+    disabled
+    seclabel u:r:recovery:s0
+
+service vibratorfeature /vendor/bin/hw/vendor.xiaomi.hardware.vibratorfeature.service
+    user root
+    group root input
+    setenv LD_LIBRARY_PATH /vendor/lib64:/vendor/lib:/system/lib64:/system/lib:/sbin
+    onrestart restart vibratorfeature
+    seclabel u:r:recovery:s0
