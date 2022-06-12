@@ -76,9 +76,6 @@ jobs:
       run: |
         curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage -d text="<b>- Run build recovery for </b><i>${{ github.event.inputs.DEVICE_NAME }}</i>%0A<b>- Start Time: </b><i>$(TZ=Australia/Sydney date +"%Y-%m-%d"-%H:%M:%S)</i>" -d chat_id=${{ secrets.TELEGRAM_TO }} -d parse_mode=HTML
 
-    - name: Check Out
-      uses: actions/checkout@main
-
     - name: Prepare the environment
       run: |
         docker rmi `docker images -q`
@@ -91,10 +88,18 @@ jobs:
         sudo apt -y upgrade
         sudo apt -y install git-core gnupg flex bison gperf build-essential zip curl zlib1g-dev gcc-multilib g++-multilib libc6-dev-i386 lib32ncurses5-dev x11proto-core-dev libx11-dev tree lib32z-dev libgl1-mesa-dev libxml2-utils xsltproc unzip jq bc bison build-essential ccache curl flex g++-multilib gcc-multilib git gnupg gperf lib32ncurses5-dev lib32readline-dev lib32z1-dev liblz4-tool libncurses5-dev libsdl1.2-dev libssl-dev libwxgtk3.0-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev imagemagick libbz2-dev libssl-dev lzma ncftp bash-completion python openjdk-8-jdk qemu-user-static
 
-    - name: Set Swap Space
-      uses: pierotofy/set-swap-space@master
+    - name: Maximize Build Space
+      uses: easimon/maximize-build-space@master
       with:
-        swap-size-gb: 10
+        root-reserve-mb: 1024
+        swap-size-mb: 10240
+        remove-dotnet: 'true'
+        temp-reserve-mb: 1024
+        remove-android: 'true'
+        remove-haskell: 'true'
+
+    - name: Check Out
+      uses: actions/checkout@main
 
     - name: Install repo
       run: |
@@ -127,7 +132,6 @@ jobs:
         source build/envsetup.sh
         repopick 5405
         repopick 5540
-        rm -rf .repo
 
     - name: Clone device tree
       run: |
@@ -139,6 +143,7 @@ jobs:
       run: |
         PATH=~/bin:$PATH
         cd ${{ steps.pwd.outputs.pwd }}
+        rm -rf .repo
         export ALLOW_MISSING_DEPENDENCIES=true
         source build/envsetup.sh
         lunch ${{ github.event.inputs.MANIFEST_TYPE }}_${{ github.event.inputs.DEVICE_NAME }}-eng
