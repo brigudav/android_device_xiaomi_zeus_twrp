@@ -8,6 +8,24 @@ on early-init
     insmod /vendor/lib/modules/spf_core_dlkm.ko
     insmod /vendor/lib/modules/adsp_loader_dlkm.ko
 
+    insmod /vendor/lib/modules/xiaomi_touch.ko
+    insmod /vendor/lib/modules/synaptics_dsx.ko
+    insmod /vendor/lib/modules/nt36xxx-spi.ko
+    insmod /vendor/lib/modules/nt36xxx-i2c.ko
+    insmod /vendor/lib/modules/fts_touch_spi.ko
+    insmod /vendor/lib/modules/focaltech_fts.ko
+    insmod /vendor/lib/modules/atmel_mxt_ts.ko
+    insmod /vendor/lib/modules/aw8697-haptic.ko
+
+    modprobe -a -d /vendor/lib/modules/ xiaomi_touch
+    modprobe -a -d /vendor/lib/modules/ synaptics_dsx
+    modprobe -a -d /vendor/lib/modules/ nt36xxx-spi
+    modprobe -a -d /vendor/lib/modules/ nt36xxx-i2c
+    modprobe -a -d /vendor/lib/modules/ fts_touch_spi
+    modprobe -a -d /vendor/lib/modules/ focaltech_fts
+    modprobe -a -d /vendor/lib/modules/ atmel_mxt_ts
+    modprobe -a -d /vendor/lib/modules/ aw8697-haptic
+
 on init
     write /sys/class/backlight/panel0-backlight/brightness 200
     setprop sys.usb.configfs 1
@@ -33,23 +51,6 @@ on boot
     start touchfeature
     start vibratorfeature
 
-    insmod /vendor/lib/modules/xiaomi_touch.ko
-    insmod /vendor/lib/modules/synaptics_dsx.ko
-    insmod /vendor/lib/modules/nt36xxx-spi.ko
-    insmod /vendor/lib/modules/nt36xxx-i2c.ko
-    insmod /vendor/lib/modules/fts_touch_spi.ko
-    insmod /vendor/lib/modules/focaltech_fts.ko
-    insmod /vendor/lib/modules/atmel_mxt_ts.ko
-    insmod /vendor/lib/modules/aw8697-haptic.ko
-    modprobe -a -d /vendor/lib/modules/ xiaomi_touch
-    modprobe -a -d /vendor/lib/modules/ synaptics_dsx
-    modprobe -a -d /vendor/lib/modules/ nt36xxx-spi
-    modprobe -a -d /vendor/lib/modules/ nt36xxx-i2c
-    modprobe -a -d /vendor/lib/modules/ fts_touch_spi
-    modprobe -a -d /vendor/lib/modules/ focaltech_fts
-    modprobe -a -d /vendor/lib/modules/ atmel_mxt_ts
-    modprobe -a -d /vendor/lib/modules/ aw8697-haptic
-
 on property:twrp.modules.loaded=true
     # Load ADSP firmware for PMIC
     wait /sys/kernel/boot_adsp/boot
@@ -60,13 +61,13 @@ on property:twrp.modules.loaded=true
 service touchfeature /vendor/bin/hw/vendor.xiaomi.hw.touchfeature@1.0-service
     user root
     group root
-    setenv LD_LIBRARY_PATH /vendor/lib64:/vendor/lib:/system/lib64:/system/lib:/sbin
+    setenv LD_LIBRARY_PATH /vendor/lib64:/vendor/lib:/vendor/lib/hw:/vendor/lib64/hw
     disabled
     seclabel u:r:recovery:s0
 
 service vibratorfeature /vendor/bin/hw/vendor.xiaomi.hardware.vibratorfeature.service
     user root
     group root input
-    setenv LD_LIBRARY_PATH /vendor/lib64:/vendor/lib:/system/lib64:/system/lib:/sbin
+    setenv LD_LIBRARY_PATH /vendor/lib64:/vendor/lib:/vendor/lib/hw:/vendor/lib64/hw
     onrestart restart vibratorfeature
     seclabel u:r:recovery:s0
