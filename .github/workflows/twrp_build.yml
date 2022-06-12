@@ -111,9 +111,8 @@ jobs:
     - name: Initialize repo
       run: |
         PATH=~/bin:$PATH
-        export HOME=${GITHUB_WORKSPACE}
-        mkdir ${GITHUB_WORKSPACE}/workspace
-        cd ${GITHUB_WORKSPACE}/workspace
+        mkdir workspace
+        cd workspace
         echo "::set-output name=pwd::$(pwd)"
         git config --global user.name "brigudav"
         git config --global user.email "alexvl1972@hotmail.com"
@@ -123,24 +122,26 @@ jobs:
     - name: Repo Sync
       run: |
         PATH=~/bin:$PATH
-        cd ${{ steps.pwd.outputs.pwd }}
+        cd workspace
         repo sync -j$(nproc --all) -c --no-clone-bundle --no-tags
 
     - name: Repopick Fscrypt
       if: ${{ github.event.inputs.MANIFEST_URL == 'https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git' && github.event.inputs.MANIFEST_BRANCH == 'twrp-12.1' }}
       run: |
-        cd ${{ steps.pwd.outputs.pwd }}
+        cd workspace
         source build/envsetup.sh
         repopick 5405
         repopick 5540
 
     - name: Clone device tree
       run: |
+        PATH=~/bin:$PATH
         cd ${{ steps.pwd.outputs.pwd }}
         git clone ${{ github.event.inputs.DEVICE_TREE_URL }} -b ${{ github.event.inputs.DEVICE_TREE_BRANCH }} ./${{ github.event.inputs.DEVICE_PATH }}
 
     - name: Building recovery
       run: |
+        PATH=~/bin:$PATH
         cd ${{ steps.pwd.outputs.pwd }}
         rm -rf .repo
         export ALLOW_MISSING_DEPENDENCIES=true
