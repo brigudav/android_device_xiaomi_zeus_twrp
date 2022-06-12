@@ -133,6 +133,7 @@ TW_EXCLUDE_APEX := true
 TARGET_USES_MKE2FS := true
 #TW_NO_CPU_TEMP := true
 TW_CUSTOM_CPU_TEMP_PATH := "/sys/devices/virtual/thermal/thermal_zone50/temp"
+TW_SUPPORT_INPUT_AIDL_HAPTICS := true
 # Load kernel modules for touch & vibrator
 #TW_LOAD_VENDOR_MODULES := "aw8697-haptic.ko atmel_mxt_ts.ko focaltech_fts.ko fts_touch_spi.ko nt36xxx-i2c.ko nt36xxx-spi.ko synaptics_dsx.ko xiaomi_touch.ko"
 
