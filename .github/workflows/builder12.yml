@@ -1,4 +1,4 @@
-name: Make Recovery an-12
+name: Build TWRP-12.1
 
 on:
   workflow_dispatch:
@@ -7,6 +7,10 @@ on:
         description: 'LIBRARY_NAME'
         required: true
         default: 'twrp'
+        type: choice
+        options:
+        - twrp
+        - omni
       LIBRARY_URL:
         description: 'LIBRARY_URL'
         required: true
@@ -15,6 +19,10 @@ on:
         description: 'LIBRARY_BRANCH'
         required: true
         default: 'twrp-12.1'
+        type: choice
+        options:
+        - twrp-11
+        - twrp-12.1
       DEVICE_URL:
         description: 'DEVICE_URL'
         required: true
@@ -40,6 +48,14 @@ on:
         - recoveryimage
         - bootimage
         - vendorbootimage
+      UPLOAD:
+        description: 'Upload to Telegram (true or false)'
+        required: true
+        default: 'yes'
+        type: choice
+        options:
+        - yes
+        - no
 
 jobs:
   build:
@@ -105,7 +121,7 @@ jobs:
       run: |
         cd ${GITHUB_WORKSPACE}/workspace
         git clone ${{ github.event.inputs.DEVICE_URL }} -b ${{ github.event.inputs.DEVICE_BRANCH }} ./${{ github.event.inputs.DEVICE_PATH }}
-    - name: Building
+    - name: Building recovery
       run: |
         cd ${GITHUB_WORKSPACE}/workspace
         export ALLOW_MISSING_DEPENDENCIES=true
@@ -113,10 +129,27 @@ jobs:
         lunch ${{ github.event.inputs.LIBRARY_NAME }}_${{ github.event.inputs.DEVICE_NAME }}-eng
         make clean
         make ${{ github.event.inputs.BUILD_TARGET }} -j$(nproc --all)
+    - name: Add img to zip
+      run: |
+        cd ${GITHUB_WORKSPACE}/workspace/out/target/product/${{ github.event.inputs.DEVICE_NAME }}
+        zip -9 twrp-${{ github.event.inputs.DEVICE_NAME }}-${{ steps.var.outputs.date }}.zip recovery.img
+        echo "::set-output name=name::$(find * -name *.zip -type f)"
+      id: zipname
+
+    - name: Upload recovery to Telegram
+      if: github.event.inputs.UPLOAD == 'true'
+      run: |
+        curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage -d text="<b>- Build for </b><i>${{ github.event.inputs.DEVICE_NAME }}</i> <b>completed%0A- End Time: </b><i>$(TZ=Australia/Sydney date +"%Y-%m-%d"-%H:%M:%S)</i>" -d chat_id=${{ secrets.TELEGRAM_TO }} -d parse_mode=HTML
+        ZIP=${{ steps.var.outputs.Outdir }}/${{ steps.zipname.outputs.name }}
+        curl https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendDocument \
+          -X POST \
+          -F chat_id="${{ secrets.TELEGRAM_TO }}" \
+          -F document="@$ZIP" \
+          --silent --show-error --fail >/dev/null &
+
     - name: Upload Articact
       uses: actions/upload-artifact@v2
       with:
         path: |
-          workspace/out/target/product/${{ github.event.inputs.DEVICE_NAME }}/*.img
-          workspace/out/target/product/${{ github.event.inputs.DEVICE_NAME }}/*.zip
+          workspace/out/target/product/${{ github.event.inputs.DEVICE_NAME }}/${{ steps.zipname.outputs.name }}
         name: ${{ github.event.inputs.DEVICE_NAME }}
