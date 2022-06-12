@@ -121,7 +121,7 @@ jobs:
         repo sync -j$(nproc --all) -c --no-clone-bundle --no-tags
         rm -rf .repo
 
-- name: Repopick Fscrypt
+    - name: Repopick Fscrypt
       if: ${{ github.event.inputs.MANIFEST_URL == 'https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git' && github.event.inputs.MANIFEST_BRANCH == 'twrp-12.1' }}
       run: |
         cd workspace
