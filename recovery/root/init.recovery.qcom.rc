@@ -17,25 +17,6 @@ on early-init
     insmod /vendor/lib/modules/atmel_mxt_ts.ko
     insmod /vendor/lib/modules/aw8697-haptic.ko
 
-    modprobe -a -d /vendor/lib/modules/ xiaomi_touch
-    modprobe -a -d /vendor/lib/modules/ synaptics_dsx
-    modprobe -a -d /vendor/lib/modules/ nt36xxx-spi
-    modprobe -a -d /vendor/lib/modules/ nt36xxx-i2c
-    modprobe -a -d /vendor/lib/modules/ fts_touch_spi
-    modprobe -a -d /vendor/lib/modules/ focaltech_fts
-    modprobe -a -d /vendor/lib/modules/ atmel_mxt_ts
-    modprobe -a -d /vendor/lib/modules/ aw8697-haptic
-
-on init
-    write /sys/class/backlight/panel0-backlight/brightness 200
-    setprop sys.usb.configfs 1
-
-on property:ro.boot.usbcontroller=*
-    setprop sys.usb.controller ${ro.boot.usbcontroller}
-    wait /sys/bus/platform/devices/${ro.boot.usb.dwc3_msm:-a600000.ssusb}/mode
-    write /sys/bus/platform/devices/${ro.boot.usb.dwc3_msm:-a600000.ssusb}/mode peripheral
-    wait /sys/class/udc/${ro.boot.usbcontroller} 1
-
 on fs
     wait /dev/block/platform/soc/${ro.boot.bootdevice}
     symlink /dev/block/platform/soc/${ro.boot.bootdevice} /dev/block/bootdevice
@@ -44,19 +25,10 @@ on post-fs
     start boot-hal-1-1
 
 on boot
-    chown system system /dev/ion
-    mknod /dev/xiaomi-touch c 10 120
-    chown system system /dev/xiaomi-touch
-    chmod 0664 /dev/xiaomi-touch
     start touchfeature
-    start vibratorfeature
-
-on property:twrp.modules.loaded=true
-    # Load ADSP firmware for PMIC
-    wait /sys/kernel/boot_adsp/boot
-    write /sys/kernel/boot_adsp/boot 1
-    wait /sys/class/power_supply/battery
+    #start vibratorfeature
     start health-hal-2-1
+    setprop sys.usb.config adb
 
 service touchfeature /vendor/bin/hw/vendor.xiaomi.hw.touchfeature@1.0-service
     user root
