@@ -59,7 +59,7 @@ on:
       ARTICACT:
         description: 'Upload Articact (true or false)'
         required: true
-        default: 'no'
+        default: 'yes'
         type: choice
         options:
         - yes
