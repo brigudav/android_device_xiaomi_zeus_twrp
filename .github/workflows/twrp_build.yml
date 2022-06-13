@@ -49,15 +49,15 @@ on:
         - bootimage
         - vendorbootimage
       UPLOAD:
-        description: 'Upload to Telegram (true or false)'
+        description: 'Upload to Telegram Bot (true or false)'
         required: true
         default: 'yes'
         type: choice
         options:
         - yes
         - no
-      ARTICACT:
-        description: 'Upload Articact (true or false)'
+      PUBLISH:
+        description: 'Publish to GitHub (true or false)'
         required: true
         default: 'yes'
         type: choice
@@ -144,7 +144,7 @@ jobs:
         echo "::set-output name=name::$(find * -name *.zip -type f)"
       id: zipname
 
-    - name: Upload recovery to Telegram
+    - name: Upload recovery to Telegram Bot
       if: github.event.inputs.UPLOAD == 'true'
       run: |
         curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage -d text="<b>- Build for </b><i>${{ github.event.inputs.DEVICE_NAME }}</i> <b>completed%0A- End Time: </b><i>$(TZ=Australia/Sydney date +"%Y-%m-%d"-%H:%M:%S)</i>" -d chat_id=${{ secrets.TELEGRAM_TO }} -d parse_mode=HTML
@@ -155,10 +155,13 @@ jobs:
           -F document="@$ZIP" \
           --silent --show-error --fail >/dev/null &
 
-    - name: Upload Articact
-      if: github.event.inputs.ARTICACT == 'true'
-      uses: actions/upload-artifact@v2
+    - name: Publish to GitHub
+      if: github.event.inputs.PUBLISH == 'true'
+      uses: softprops/action-gh-release@v1
       with:
-        path: |
-          workspace/out/target/product/${{ github.event.inputs.DEVICE_NAME }}/${{ steps.zipname.outputs.name }}
-        name: ${{ github.event.inputs.DEVICE_NAME }}
+        files: workspace/out/target/product/${{ github.event.inputs.DEVICE_NAME }}/${{ steps.zipname.outputs.name }}
+        name: ${{ steps.zipname.outputs.name }}-${{ github.run_id }}
+        tag_name: ${{ github.run_id }}
+        body: Recovery for ${{ github.event.inputs.DEVICE_NAME }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.TEST }}
