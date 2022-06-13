@@ -56,6 +56,14 @@ on:
         options:
         - yes
         - no
+      ARTICACT:
+        description: 'Upload Articact (true or false)'
+        required: true
+        default: 'no'
+        type: choice
+        options:
+        - yes
+        - no
 
 jobs:
   build:
@@ -140,7 +148,7 @@ jobs:
       if: github.event.inputs.UPLOAD == 'true'
       run: |
         curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage -d text="<b>- Build for </b><i>${{ github.event.inputs.DEVICE_NAME }}</i> <b>completed%0A- End Time: </b><i>$(TZ=Australia/Sydney date +"%Y-%m-%d"-%H:%M:%S)</i>" -d chat_id=${{ secrets.TELEGRAM_TO }} -d parse_mode=HTML
-        ZIP=${{ steps.var.outputs.Outdir }}/${{ steps.zipname.outputs.name }}
+        ZIP=${GITHUB_WORKSPACE}/workspace/out/target/product/${{ github.event.inputs.DEVICE_NAME }}/${{ steps.zipname.outputs.name }}
         curl https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendDocument \
           -X POST \
           -F chat_id="${{ secrets.TELEGRAM_TO }}" \
@@ -148,6 +156,7 @@ jobs:
           --silent --show-error --fail >/dev/null &
 
     - name: Upload Articact
+      if: github.event.inputs.ARTICACT == 'true'
       uses: actions/upload-artifact@v2
       with:
         path: |
